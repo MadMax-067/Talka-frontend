@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.cl-formButtonPrimary {
+  @apply bg-purple-600 hover:bg-purple-700 text-white;
+}
+
+.cl-internal-1dauvpw{
+  display: none;
+}
