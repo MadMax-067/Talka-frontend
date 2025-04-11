@@ -8,6 +8,7 @@ import {
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SocketProvider } from "@/context/SocketContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +41,9 @@ export default function RootLayout({ children }) {
               <UserButton />
             </SignedIn>
           </header>
-          {children}
+          <SocketProvider>
+            {children}
+          </SocketProvider>
         </body>
       </html>
     </ClerkProvider>

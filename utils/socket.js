@@ -1,5 +1,19 @@
+// utils/socket.js
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:8000", { transports: ["websocket"], withCredentials: true });
+let socket;
 
-export default socket;
+export const connectSocket = (token) => {
+    if (!socket || !socket.connected) {
+        socket = io("http://localhost:8000", {
+            transports: ["websocket"],
+            withCredentials: true,
+            auth: {
+                token, // Clerk JWT
+            },
+        });
+    }
+    return socket;
+};
+
+export const getSocket = () => socket;
