@@ -1,14 +1,13 @@
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from '@clerk/nextjs'
+import { ClerkProvider } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SocketProvider } from "@/context/SocketContext";
+import Sidebar from '@/components/Sidebar';
+import Navbar from '@/components/Navbar';
+import localFont from 'next/font/local'
+
+const SfProDisplayRegular = localFont({ src: '../fonts/SF-Pro-Display-Regular.otf' })
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,19 +29,14 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${SfProDisplayRegular.className} antialiased`}
         >
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
           <SocketProvider>
-            {children}
+            <Navbar />
+            <main className="flex">
+              <Sidebar />
+              {children}
+            </main>
           </SocketProvider>
         </body>
       </html>

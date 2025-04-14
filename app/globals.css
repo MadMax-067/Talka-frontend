@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fefefe;
+  --foreground: #1b1d22;
+  --border-lines: #e2e2e1;
+  --search-icon: #828588;
+  --input-color: #fdfdfd;
+  --primary-text: #000000;
+  --secondary-text: #10100ebb;
 }
 
 @theme inline {
@@ -14,10 +19,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1b1d22;
+    --foreground: #fefefe;
+    --border-lines: #292b30;
+    --search-icon: #fefefe;
+    --input-color: #23272a;
+    --primary-text: #fefefe;
+    --secondary-text: #aaacb8;
   }
 }
+
 
 body {
   background: var(--background);
@@ -29,6 +40,6 @@ body {
   @apply bg-purple-600 hover:bg-purple-700 text-white;
 }
 
-.cl-internal-1dauvpw{
+.cl-internal-1dauvpw {
   display: none;
 }
