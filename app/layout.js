@@ -34,9 +34,6 @@ export default function RootLayout({ children }) {
           <SocketProvider>
             <Navbar />
             <main className="flex justify-center">
-              <SignedIn>
-                <Sidebar />
-              </SignedIn>
               {children}
             </main>
           </SocketProvider>

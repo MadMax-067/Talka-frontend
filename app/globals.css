@@ -19,6 +19,7 @@
   --bg: #fefefe;
   --card-bg: #ffffff;
   --hover-border: #3c86ec;
+  --profile-nav: #f7f7f7;
 }
 
 @theme inline {
@@ -48,6 +49,7 @@
     --bg: #1b1d22;
     --card-bg: #23272a;
     --hover-border: #215ec7;
+    --profile-nav: #2a2e31;
   }
 }
 
@@ -58,10 +60,84 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.cl-formButtonPrimary {
-  @apply bg-purple-600 hover:bg-purple-700 text-white;
+.cl-navbar,
+.cl-footer {
+  background: var(--profile-nav);
 }
 
-.cl-internal-1dauvpw {
-  display: none;
+.cl-formButtonPrimary {
+  @apply bg-(--send-bubble-bg) hover:opacity-90 transition-opacity;
+}
+
+.cl-internal-c2xpfh,
+.cl-actionCard,
+.cl-userButtonPopoverMain,
+.cl-card {
+  @apply bg-(--background);
+}
+
+.cl-badge {
+  @apply bg-(--input-color) text-(--search-icon)/50;
+}
+
+.cl-internal-1q1j6io,
+.cl-internal-1caxr34,
+.cl-internal-1mdgqw8,
+.cl-internal-1yphags,
+.cl-internal-1yphags> :not([hidden], :empty)~ :not([hidden], :empty) {
+  @apply border-t-(--border-lines);
+}
+
+.cl-internal-1jipkho,
+.cl-internal-dqnjy0,
+.cl-internal-bd5msj,
+.cl-internal-bolkfx,
+.cl-internal-1pz8pdy,
+.cl-internal-x06ncm,
+.cl-formFieldLabel,
+.cl-profileSectionTitleText,
+.cl-internal-17dpwu0,
+.cl-navbarButtonIcon,
+.cl-navbarButtonText,
+.cl-userButtonPopoverActionButton {
+  @apply text-(--secondary-text);
+}
+
+.cl-internal-190cjq9,
+.cl-internal-1s0h3cl,
+.cl-internal-pp7u0o,
+.cl-userPreviewTextContainer,
+.cl-headerTitle {
+  @apply text-(--primary-text);
+}
+
+.cl-internal-nbukz8,
+.cl-formResendCodeLink,
+.cl-formFieldRadioLabelTitle {
+  @apply text-(--secondary-text)/70;
+}
+
+.cl-formFieldInput,
+.cl-otpCodeFieldInput {
+  @apply border-2 border-(--border-lines) bg-(--input-color) text-(--foreground)/85;
+}
+
+.cl-internal-yf1f2i,
+.cl-formButtonReset,
+.cl-socialButtonsBlockButton {
+  @apply bg-(--input-color) border-2 border-(--border-lines) text-(--primary-text) font-medium hover:bg-(--hover-bg) transition-colors;
+}
+
+.cl-menuList {
+  @apply bg-(--input-color);
+}
+
+.cl-internal-1nqeek7,
+.cl-footerActionLink {
+  @apply text-(--send-bubble-bg);
+}
+
+.cl-internal-1dauvpw,
+.cl-userButtonPopoverFooter {
+  display: none !important;
 }

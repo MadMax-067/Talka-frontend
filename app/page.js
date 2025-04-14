@@ -1,13 +1,17 @@
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs'
-import {RiChatSmile2Line, RiChat3Line, RiShieldLine, RiSparklingLine } from 'react-icons/ri'
-import ChatPlaceholder from "@/components/ChatPlaceholder";
+import { RiChatSmile2Line, RiChat3Line, RiShieldLine, RiSparklingLine } from 'react-icons/ri'
+import { currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
+export default async function Home() {
+  const user = await currentUser()
+
+  if (user) {
+    redirect('/talk')
+  }
+
   return (
     <>
-      <SignedIn>
-        <ChatPlaceholder />
-      </SignedIn>
       <SignedOut>
         <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-gradient-to-b from-(--bg) to-(--input-bg)">
 
@@ -21,14 +25,14 @@ export default function Home() {
             <h1 className="text-4xl font-bold text-(--primary-text) mb-4">
               Welcome to <span className="text-gradient">Talka</span>
             </h1>
-            
+
             <p className="text-lg text-(--secondary-text) mb-8">
               Connect, chat, and collaborate in real-time with a modern messaging experience.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-12">
               {features.map((feature, index) => (
-                <div 
+                <div
                   key={index}
                   className="p-6 rounded-xl bg-(--card-bg) border border-(--border-lines) hover:border-(--hover-border) transition-all hover:-translate-y-1"
                 >
@@ -41,7 +45,7 @@ export default function Home() {
               ))}
             </div>
 
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
               <SignUpButton mode="modal">
                 <button className="px-8 py-3 rounded-full bg-(--send-bubble-bg) text-white font-medium hover:opacity-90 transition-opacity">
