@@ -8,6 +8,14 @@
   --input-color: #fdfdfd;
   --primary-text: #000000;
   --secondary-text: #10100ebb;
+  --send-bubble-bg: #3c86ec;
+  --send-bubble-text: #fefefe;
+  --send-bubble-outline: #1e60e9;
+  --receive-bubble-bg: #f1f1f1;
+  --receive-bubble-text: #000000;
+  --receive-bubble-outline: #e2e2e1;
+  --input-bg: #fdfdfd;
+  --hover-bg: #ebdfdf;
 }
 
 @theme inline {
@@ -26,6 +34,14 @@
     --input-color: #23272a;
     --primary-text: #fefefe;
     --secondary-text: #aaacb8;
+    --send-bubble-bg: #215ec7;
+    --send-bubble-text: #fefefe;
+    --send-bubble-outline: #2678f9;
+    --receive-bubble-bg: #30343a;
+    --receive-bubble-text: #fefefe;
+    --receive-bubble-outline: #3c4048;
+    --input-bg: #23272a;
+    --hover-bg: #2a2e31;
   }
 }
 

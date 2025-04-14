@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import PerfectScrollbar from 'perfect-scrollbar';
 import 'perfect-scrollbar/css/perfect-scrollbar.css';
 
-const CustomScrollbar = ({ children }) => {
+const CustomScrollbar = ({ children, className }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const CustomScrollbar = ({ children }) => {
   return (
     <div
       ref={scrollRef}
-      className="h-full overflow-hidden relative"
+      className={`h-full overflow-hidden relative ${className}`}
     >
       {children}
     </div>
