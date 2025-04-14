@@ -16,6 +16,9 @@
   --receive-bubble-outline: #e2e2e1;
   --input-bg: #fdfdfd;
   --hover-bg: #ebdfdf;
+  --bg: #fefefe;
+  --card-bg: #ffffff;
+  --hover-border: #3c86ec;
 }
 
 @theme inline {
@@ -42,6 +45,9 @@
     --receive-bubble-outline: #3c4048;
     --input-bg: #23272a;
     --hover-bg: #2a2e31;
+    --bg: #1b1d22;
+    --card-bg: #23272a;
+    --hover-border: #215ec7;
   }
 }
 

@@ -1,4 +1,4 @@
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider, SignedIn } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SocketProvider } from "@/context/SocketContext";
@@ -33,8 +33,10 @@ export default function RootLayout({ children }) {
         >
           <SocketProvider>
             <Navbar />
-            <main className="flex">
-              <Sidebar />
+            <main className="flex justify-center">
+              <SignedIn>
+                <Sidebar />
+              </SignedIn>
               {children}
             </main>
           </SocketProvider>
