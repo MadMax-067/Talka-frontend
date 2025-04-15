@@ -8,4 +8,9 @@ export const SOCKET_EVENTS = {
     PRIVATE_MESSAGE: "private-message",
     GET_MESSAGES: "get-messages",
     MESSAGE_HISTORY: "message-history",
+    TYPING: "typing",
+    STOP_TYPING: "stop-typing",
+    USER_ONLINE: "user-online",
+    USER_OFFLINE: "user-offline",
+    CONVERSATION_UPDATE : "conversation-update",
 };

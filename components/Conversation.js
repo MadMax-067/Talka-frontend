@@ -1,20 +1,67 @@
+"use client"
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { format } from 'date-fns'
 
-const Conversation = ({ isFirst, conversationData }) => {
+const Conversation = ({ isFirst, conversationData, isActive, onSelect }) => {
+  const router = useRouter();
+  
+  // Format the timestamp to hh:mm AM/PM
+  const formattedTime = conversationData?.lastUpdated 
+    ? format(new Date(conversationData.lastUpdated), 'hh:mm a')
+    : '';
+
+  const handleClick = () => {
+    onSelect(conversationData);
+    router.push(`/talk/${conversationData.conversationId}`, { scroll: false });
+  };
+
   return (
-    <div className={`flex justify-between mx-6 ${isFirst ? 'border-0' : 'border-t-2'} border-t-(--border-lines) min-h-[4.5rem]`} >
-      <div className="flex items-center" >
-        <Image className="rounded-full object-cover w-10 h-10" src={conversationData?.avatar} alt={conversationData?.fullName} width={64} height={64} />
-        <div className="flex flex-col ml-4 gap-0.5">
-          <span className="text-lg text-(--primary-text)" >{conversationData ? conversationData?.name : "Jhon Doe"}</span>
-          <span className="text-sm font-light text-(--secondary-text)" >{conversationData ? conversationData?.lastMessage : "Good Morning"}</span>
+    <div 
+      onClick={handleClick}
+      className={`
+        flex justify-between px-6 py-3 
+        ${isFirst ? 'border-0' : 'border-t-2'} 
+        border-t-(--border-lines) 
+        min-h-[4.5rem]
+        cursor-pointer
+        hover:bg-(--hover-bg)
+        transition-colors
+        ${isActive ? 'bg-(--hover-bg)' : ''}
+      `}
+    >
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <Image 
+            className="rounded-full object-cover w-12 h-12" 
+            src={conversationData?.friend?.avatar} 
+            alt={conversationData?.friend?.fullName} 
+            width={64} 
+            height={64} 
+          />
+          {conversationData?.friend?.isOnline && (
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+          )}
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-base font-medium text-(--primary-text)">
+            {conversationData?.friend?.fullName}
+          </span>
+          <span className="text-sm text-(--secondary-text) line-clamp-1 max-w-[200px]">
+            {conversationData?.lastMessage}
+          </span>
         </div>
       </div>
-      <div className="flex flex-col items-center gap-1 mt-4">
-        <span className="text-xs text-(--secondary-text)" >{conversationData ? conversationData?.lastMessageTime : "10:32 AM"}</span>
+
+      <div className="flex flex-col items-end gap-1 mt-1">
+        <span className="text-xs text-(--secondary-text)">
+          {formattedTime}
+        </span>
         {conversationData?.unreadCount > 0 && (
-          <span className="flex justify-center items-center text-center bg-green-600 text-white rounded-full px-2 py-1 text-xs" >{conversationData?.unreadCount}</span>
+          <span className="flex justify-center items-center text-center bg-(--send-bubble-bg) text-white rounded-full min-w-[20px] h-5 text-xs px-1.5">
+            {conversationData?.unreadCount}
+          </span>
         )}
       </div>
     </div>

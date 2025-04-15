@@ -3,6 +3,7 @@ import { useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
 import useSocketMessages from "@/hooks/useSocketMessages";
 import generateConversationId from "@/utils/generateConversationId";
+import { useSocket } from "@/context/SocketContext";
 
 import React from 'react'
 
@@ -13,6 +14,7 @@ const page = () => {
     const [input, setInput] = useState("");
     const [selectedConversationId, setSelectedConversationId] = useState("");
     const { messagesMap, unreadMap, sendMessage, markConversationRead, getMessages, } = useSocketMessages(currentUserId);
+    const { conversations } = useSocket();
 
     const startChat = () => {
         const convId = generateConversationId(currentUserId, otherUserId);
@@ -29,13 +31,12 @@ const page = () => {
     };
 
     const messages = messagesMap[selectedConversationId] || [];
-    messages.map((msg) => {
-        console.log("Message:", msg);
-        console.log("Sender ID:", msg.from);
-        console.log("Receiver ID:", msg.to);
-        console.log("Content:", msg.content);
-    });
 
+
+    useEffect(() => {
+        console.log("Conversations:", conversations);
+        
+    }, [conversations])
 
     return (
         <div className="p-4"> <h1 className="text-2xl font-bold mb-4">Test Chat</h1>
