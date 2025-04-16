@@ -13,6 +13,8 @@ export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const [conversations, setConversations] = useState([]);
     const [conversationLoading, setConversationLoading] = useState(false);
+    const [selectedConversation, setSelectedConversation] = useState(null);
+    const [messages, setMessages] = useState([]);
     const socketRef = useRef(null);
 
     useEffect(() => {
@@ -46,7 +48,7 @@ export const SocketProvider = ({ children }) => {
     }, [isSignedIn]);
 
     return (
-        <SocketContext.Provider value={{ socket, conversations, setConversations, conversationLoading, setConversationLoading }}>
+        <SocketContext.Provider value={{ socket, conversations, setConversations, conversationLoading, setConversationLoading ,selectedConversation, setSelectedConversation, messages, setMessages}}>
             {children}
         </SocketContext.Provider>
     );

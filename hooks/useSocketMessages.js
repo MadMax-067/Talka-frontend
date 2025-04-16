@@ -29,7 +29,6 @@ export default function useSocketMessages(currentUserId) {
         if (socket) fetchConversations();
     }, [socket]);
 
-
     const sendMessage = useCallback((toUserId, content) => {
         if (!socket || !toUserId || !content) return;
         const conversationId = generateConversationId(currentUserId, toUserId);
@@ -42,9 +41,30 @@ export default function useSocketMessages(currentUserId) {
             createdAt: new Date().toISOString(),
             read: false,
         };
-        setMessagesMap((prev) => ({ ...prev, [conversationId]: [...(prev[conversationId] || []), newMessage], }));
+        
+        // Immediately update messages in current chat
+        setMessagesMap((prev) => {
+            const currentMessages = prev[conversationId] || [];
+            return {
+                ...prev,
+                [conversationId]: [...currentMessages, newMessage],
+            };
+        });
+
+        // Update conversation list
+        setConversations((prev) => {
+            const others = prev.filter(c => c.conversationId !== conversationId);
+            const currentConv = prev.find(c => c.conversationId === conversationId);
+            const updated = {
+                ...currentConv,
+                lastMessage: content,
+                lastUpdated: new Date().toISOString()
+            };
+            return [updated, ...others];
+        });
+
         socket.emit(SOCKET_EVENTS.SEND_MESSAGE, { toUserId, content });
-    }, [socket]);
+    }, [socket, currentUserId]);
 
     const markConversationRead = useCallback((conversationId) => {
         if (!socket || !conversationId) return;
@@ -68,16 +88,48 @@ export default function useSocketMessages(currentUserId) {
 
     useEffect(() => {
         if (!socket) return;
+
         const handleNewMessage = (message) => {
             const { conversationId } = message;
-            setMessagesMap((prev) => ({
-                ...prev,
-                [conversationId]: [...(prev[conversationId] || []), message],
-            }));
+            
+            // Update messages immediately for open chats
+            setMessagesMap((prev) => {
+                const currentMessages = prev[conversationId] || [];
+                // Remove temp message if it exists
+                const filteredMessages = currentMessages.filter(msg => !msg._id.startsWith('temp-'));
+                return {
+                    ...prev,
+                    [conversationId]: [...filteredMessages, message],
+                };
+            });
+
+            // Update conversations list with latest message
+            setConversations((prev) => {
+                const others = prev.filter(c => c.conversationId !== conversationId);
+                const currentConv = prev.find(c => c.conversationId === conversationId);
+                if (!currentConv) return prev;
+
+                const updated = {
+                    ...currentConv,
+                    lastMessage: message.content,
+                    lastUpdated: message.createdAt,
+                    unreadCount: message.from !== currentUserId ? 
+                        (currentConv.unreadCount || 0) + 1 : 
+                        currentConv.unreadCount
+                };
+                return [updated, ...others];
+            });
+
+            // Update unread count for incoming messages
+            if (message.from !== currentUserId) {
+                setUnreadMap((prev) => ({
+                    ...prev,
+                    [conversationId]: (prev[conversationId] || 0) + 1
+                }));
+            }
         };
 
         const handleMessageHistory = ({ conversationId, messages, page }) => {
-            console.log("Message history received:", messages);
             setMessagesMap((prev) => ({
                 ...prev,
                 [conversationId]: page === 0

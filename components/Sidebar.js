@@ -11,18 +11,54 @@ import useSocketMessages from "@/hooks/useSocketMessages";
 const Sidebar = () => {
     const { user } = useUser();
     const currentUserId = user?.id;
-    const { conversations, conversationLoading } = useSocket();
-    const socketDetails = useSocketMessages(currentUserId);
-    const [selectedConversation, setSelectedConversation] = useState(null);
+    const { 
+        conversations, 
+        conversationLoading, 
+        selectedConversation, 
+        setSelectedConversation, 
+        setMessages 
+    } = useSocket();
+    
+    const { 
+        messagesMap, 
+        unreadMap,
+        markConversationRead, 
+        getMessages,
+        setUnreadMap
+    } = useSocketMessages(currentUserId);
 
-    const handleConversationSelect = (conversation) => {
+    const handleConversationSelect = async (conversation) => {
         setSelectedConversation(conversation);
-        // You can also emit this to your socket or update global state
+        
+        try {
+            // Always fetch fresh messages when selecting a conversation
+            await getMessages(conversation.conversationId);
+            
+            // Mark as read
+            if (conversation.unreadCount > 0) {
+                markConversationRead(conversation.conversationId);
+                // Update unread count locally
+                setUnreadMap(prev => ({
+                    ...prev,
+                    [conversation.conversationId]: 0
+                }));
+            }
+        } catch (error) {
+            console.error('Error loading messages:', error);
+        }
     };
 
     useEffect(() => {
-        console.log(conversations);
-    }, [conversations]);
+        if (selectedConversation && messagesMap[selectedConversation.conversationId]) {
+            setMessages(messagesMap[selectedConversation.conversationId]);
+        }
+    }, [messagesMap, selectedConversation]);
+
+    // Update conversation display with unread counts
+    const displayConversations = conversations.map(conv => ({
+        ...conv,
+        unreadCount: unreadMap[conv.conversationId] || conv.unreadCount || 0
+    }));
 
     return (
         <aside className="flex flex-col w-1/4 h-[calc(100dvh-5rem)] border-r-2 border-r-(--border-lines)">
@@ -34,10 +70,10 @@ const Sidebar = () => {
             </section>
             <CustomScrollbar>
                 {!conversationLoading ? (
-                    conversations.length > 0 ? (
+                    displayConversations.length > 0 ? (
                         <div className="flex flex-col w-full">
-                            {conversations.map((conv, idx) => (
-                                <Conversation 
+                            {displayConversations.map((conv, idx) => (
+                                <Conversation
                                     key={conv.conversationId}
                                     conversationData={conv}
                                     isFirst={idx === 0}
