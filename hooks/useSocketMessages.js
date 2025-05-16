@@ -17,7 +17,7 @@ export default function useSocketMessages(currentUserId) {
         const fetchConversations = async () => {
             try {
                 setConversationLoading(true);
-                const result = await axios.get(`http://localhost:8000/api/v1/conversations/${currentUserId}`);
+                const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/conversations/${currentUserId}`);
                 setConversations(result.data.data);
             } catch (err) {
                 console.error(err);
