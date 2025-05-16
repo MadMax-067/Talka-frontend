@@ -14,36 +14,50 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
     const [msgInput, setMsgInput] = useState('');
     const router = useRouter();
     const { sendMessage } = useSocketMessages(currentUserId);
-    const lastMessageRef = useRef(null);
+    const firstLoadRef = useRef(true);
 
     // Scroll to bottom for new messages
     useEffect(() => {
         if (scrollContainerRef.current && chatData.length > 0) {
             const scrollElement = scrollContainerRef.current.querySelector('.ps');
             if (scrollElement) {
-                const lastMessage = chatData[chatData.length - 1];
-                const isNewMessage = lastMessage !== lastMessageRef.current;
-                const shouldAutoScroll = 
-                    (scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 100) ||
-                    (isNewMessage && lastMessage.from === currentUserId);
-
-                if (shouldAutoScroll) {
+                // Always scroll on first load
+                if (firstLoadRef.current) {
                     scrollElement.scrollTop = scrollElement.scrollHeight;
+                    firstLoadRef.current = false;
+                    return;
                 }
-                lastMessageRef.current = lastMessage;
+
+                // For subsequent messages, check if we're near bottom
+                const isNearBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 100;
+                
+                if (isNearBottom) {
+                    // Use setTimeout to ensure DOM is updated
+                    setTimeout(() => {
+                        scrollElement.scrollTop = scrollElement.scrollHeight;
+                    }, 0);
+                }
             }
         }
-    }, [chatData, currentUserId]);
+
+        // Reset firstLoad when conversation changes
+        return () => {
+            firstLoadRef.current = true;
+        };
+    }, [chatData]);
 
     const handleSend = () => {
         if (conversationData?.friend?.clerkId && msgInput.trim()) {
             sendMessage(conversationData.friend.clerkId, msgInput.trim());
             setMsgInput('');
+            
             // Force scroll to bottom on send
             if (scrollContainerRef.current) {
                 const scrollElement = scrollContainerRef.current.querySelector('.ps');
                 if (scrollElement) {
-                    scrollElement.scrollTop = scrollElement.scrollHeight;
+                    setTimeout(() => {
+                        scrollElement.scrollTop = scrollElement.scrollHeight;
+                    }, 0);
                 }
             }
         }

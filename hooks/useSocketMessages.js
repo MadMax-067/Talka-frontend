@@ -7,7 +7,7 @@ import generateConversationId from "@/utils/generateConversationId";
 import axios from "axios";
 
 export default function useSocketMessages(currentUserId) {
-    const { socket, conversations, setConversations, setConversationLoading } = useSocket();
+    const { socket, conversations, setConversations, setConversationLoading, setMessages } = useSocket();
     const [messagesMap, setMessagesMap] = useState({});
     const [unreadMap, setUnreadMap] = useState({});
     const [typingMap, setTypingMap] = useState({});
@@ -42,7 +42,7 @@ export default function useSocketMessages(currentUserId) {
             read: false,
         };
         
-        // Immediately update messages in current chat
+        // Update both local messages and context messages
         setMessagesMap((prev) => {
             const currentMessages = prev[conversationId] || [];
             return {
@@ -50,6 +50,9 @@ export default function useSocketMessages(currentUserId) {
                 [conversationId]: [...currentMessages, newMessage],
             };
         });
+
+        // Update messages in context
+        setMessages(prev => [...prev, newMessage]);
 
         // Update conversation list
         setConversations((prev) => {
@@ -64,7 +67,7 @@ export default function useSocketMessages(currentUserId) {
         });
 
         socket.emit(SOCKET_EVENTS.SEND_MESSAGE, { toUserId, content });
-    }, [socket, currentUserId]);
+    }, [socket, currentUserId, setMessages]);
 
     const markConversationRead = useCallback((conversationId) => {
         if (!socket || !conversationId) return;
@@ -92,10 +95,9 @@ export default function useSocketMessages(currentUserId) {
         const handleNewMessage = (message) => {
             const { conversationId } = message;
             
-            // Update messages immediately for open chats
+            // Update messages in both maps and context
             setMessagesMap((prev) => {
                 const currentMessages = prev[conversationId] || [];
-                // Remove temp message if it exists
                 const filteredMessages = currentMessages.filter(msg => !msg._id.startsWith('temp-'));
                 return {
                     ...prev,
@@ -103,7 +105,13 @@ export default function useSocketMessages(currentUserId) {
                 };
             });
 
-            // Update conversations list with latest message
+            // Update context messages
+            setMessages(prev => {
+                const filteredMessages = prev.filter(msg => !msg._id.startsWith('temp-'));
+                return [...filteredMessages, message];
+            });
+
+            // Update conversations list
             setConversations((prev) => {
                 const others = prev.filter(c => c.conversationId !== conversationId);
                 const currentConv = prev.find(c => c.conversationId === conversationId);
@@ -119,23 +127,16 @@ export default function useSocketMessages(currentUserId) {
                 };
                 return [updated, ...others];
             });
-
-            // Update unread count for incoming messages
-            if (message.from !== currentUserId) {
-                setUnreadMap((prev) => ({
-                    ...prev,
-                    [conversationId]: (prev[conversationId] || 0) + 1
-                }));
-            }
         };
 
         const handleMessageHistory = ({ conversationId, messages, page }) => {
             setMessagesMap((prev) => ({
                 ...prev,
-                [conversationId]: page === 0
-                    ? messages
-                    : [...(prev[conversationId] || []), ...messages],
+                [conversationId]: page === 0 ? messages : [...(prev[conversationId] || []), ...messages],
             }));
+
+            // Update context messages directly
+            setMessages(messages);
         };
 
         const handleUnreadCount = ({ conversationId, count }) => {
