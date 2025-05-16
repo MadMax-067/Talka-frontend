@@ -12,6 +12,12 @@ const Conversation = ({ isFirst, conversationData, isActive, onSelect }) => {
     ? format(new Date(conversationData.lastUpdated), 'hh:mm a')
     : '';
 
+  // Format the name to limit length to 12 characters
+  const formatName = (name) => {
+    if (!name) return '';
+    return name.length > 12 ? `${name.substring(0, 12)}...` : name;
+  };
+
   const handleClick = () => {
     onSelect(conversationData);
   };
@@ -44,8 +50,8 @@ const Conversation = ({ isFirst, conversationData, isActive, onSelect }) => {
           )}
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className="text-base font-medium text-(--primary-text)">
-            {conversationData?.friend?.fullName}
+          <span className="text-base font-medium text-(--primary-text)" title={conversationData?.friend?.fullName}>
+            {formatName(conversationData?.friend?.fullName)}
           </span>
           <span className="text-sm text-(--secondary-text) line-clamp-1 max-w-[200px]">
             {conversationData?.lastMessage}
