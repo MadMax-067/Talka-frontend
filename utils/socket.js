@@ -5,7 +5,7 @@ let socket;
 
 export const connectSocket = (token) => {
     if (!socket || !socket.connected) {
-        socket = io("http://localhost:8000", {
+        socket = io(`${process.env.NEXT_PUBLIC_BACKEND_URL}`, {
             transports: ["websocket"],
             withCredentials: true,
             auth: {
