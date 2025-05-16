@@ -14,7 +14,6 @@ const Conversation = ({ isFirst, conversationData, isActive, onSelect }) => {
 
   const handleClick = () => {
     onSelect(conversationData);
-    router.push(`/talk/${conversationData.conversationId}`, { scroll: false });
   };
 
   return (

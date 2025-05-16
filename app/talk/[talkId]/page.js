@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import { useEffect } from 'react'
 import useSocketMessages from "@/hooks/useSocketMessages";
 import { useSocket } from "@/context/SocketContext";
+import ChatPlaceholder from '@/components/ChatPlaceholder';
 
 const Page = ({ params }) => {
     const { user } = useUser();
@@ -22,16 +23,21 @@ const Page = ({ params }) => {
         const initializeChat = async () => {
             const { talkId } = await params;
             
-            if (talkId && (!selectedConversation || selectedConversation.conversationId !== talkId)) {
+            // if (talkId && (!selectedConversation || selectedConversation.conversationId !== talkId)) {
                 await getMessages(talkId);
-            }
+            // }
         };
 
         initializeChat();
     }, [selectedConversation]);
 
     if (!selectedConversation) {
-        return <div>Loading...</div>
+        return (
+                <>
+                    <Sidebar />
+                    <ChatPlaceholder />
+                </>
+            )
     }
 
     return (

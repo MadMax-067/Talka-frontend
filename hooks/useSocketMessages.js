@@ -7,7 +7,7 @@ import generateConversationId from "@/utils/generateConversationId";
 import axios from "axios";
 
 export default function useSocketMessages(currentUserId) {
-    const { socket, conversations, setConversations, setConversationLoading, setMessages } = useSocket();
+    const { socket, conversations, setConversations, setConversationLoading, setMessages, selectedConversation } = useSocket();
     const [messagesMap, setMessagesMap] = useState({});
     const [unreadMap, setUnreadMap] = useState({});
     const [typingMap, setTypingMap] = useState({});
@@ -41,7 +41,7 @@ export default function useSocketMessages(currentUserId) {
             createdAt: new Date().toISOString(),
             read: false,
         };
-        
+
         // Update both local messages and context messages
         setMessagesMap((prev) => {
             const currentMessages = prev[conversationId] || [];
@@ -94,22 +94,41 @@ export default function useSocketMessages(currentUserId) {
 
         const handleNewMessage = (message) => {
             const { conversationId } = message;
-            
+
+            const isFromOther = message.from !== currentUserId;
+            const isConversationOpen = selectedConversation && selectedConversation.conversationId === conversationId;
+            console.log(`isFromOther:${isFromOther}`)
+            console.log(`isConversationOpen:${isConversationOpen}`)
+
             // Update messages in both maps and context
-            setMessagesMap((prev) => {
-                const currentMessages = prev[conversationId] || [];
-                const filteredMessages = currentMessages.filter(msg => !msg._id.startsWith('temp-'));
-                return {
-                    ...prev,
-                    [conversationId]: [...filteredMessages, message],
-                };
-            });
+            // setMessagesMap((prev) => {
+            //     return {
+            //         ...prev,
+            //         [conversationId]: [...prev[conversationId], message],
+            //     };
+            // });
 
             // Update context messages
+            // Update context messages with proper checking
             setMessages(prev => {
-                const filteredMessages = prev.filter(msg => !msg._id.startsWith('temp-'));
-                return [...filteredMessages, message];
+                // Skip if previous state is already correct (prevents unnecessary re-renders)
+                if (prev.length > 0 && prev[prev.length - 1]._id === message._id) {
+                    return prev;
+                }
+
+
+                // Check if current message exists to avoid duplicates
+                const messageExists = prev.some(msg => msg._id === message._id);
+                if (messageExists) {
+                    return prev;
+                }
+
+                return [...prev, message];
             });
+            // setMessages(prev => {
+            //     const filteredMessages = prev.filter(msg => !msg._id.startsWith('temp-'));
+            //     return [...filteredMessages, message];
+            // });
 
             // Update conversations list
             setConversations((prev) => {
@@ -121,12 +140,31 @@ export default function useSocketMessages(currentUserId) {
                     ...currentConv,
                     lastMessage: message.content,
                     lastUpdated: message.createdAt,
-                    unreadCount: message.from !== currentUserId ? 
-                        (currentConv.unreadCount || 0) + 1 : 
+                    unreadCount: isFromOther && !isConversationOpen ?
+                        (currentConv.unreadCount || 0) + 1 :
                         currentConv.unreadCount
                 };
-                return [updated, ...others];
+                return [updated, ...others].sort((a, b) =>
+                    new Date(b.lastUpdated) - new Date(a.lastUpdated)
+                );
             });
+
+            // Mark message as read if conversation is open and message is from someone else
+            if (isFromOther && isConversationOpen) {
+                markConversationRead(conversationId);
+
+                // Update local unread state immediately for UI
+                setUnreadMap(prev => ({
+                    ...prev,
+                    [conversationId]: 0
+                }));
+            } else if (isFromOther) {
+                // Only update unread map if message is not from current user and conversation is not open
+                setUnreadMap(prev => ({
+                    ...prev,
+                    [conversationId]: (prev[conversationId] || 0) + 1
+                }));
+            }
         };
 
         const handleMessageHistory = ({ conversationId, messages, page }) => {
@@ -197,5 +235,5 @@ export default function useSocketMessages(currentUserId) {
             socket.off(SOCKET_EVENTS.CONVERSATION_UPDATE, handleConversationUpdate);
         };
     }, [socket]);
-    return { messagesMap, unreadMap, typingMap, presenceMap, sendMessage, markConversationRead, getMessages, emitTyping, emitStopTyping };
+    return { messagesMap, unreadMap, typingMap, presenceMap, sendMessage, markConversationRead, getMessages, emitTyping, emitStopTyping, setUnreadMap };
 }

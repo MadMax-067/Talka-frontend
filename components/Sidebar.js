@@ -3,6 +3,7 @@ import { useUser } from "@clerk/nextjs";
 import React, { useState, useEffect } from "react";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { RiLoader4Line, RiChatNewLine, RiUserAddLine } from "react-icons/ri";
+import { useRouter } from 'next/navigation';
 import Conversation from "@/components/Conversation.js";
 import CustomScrollbar from "@/components/CustomScrollbar";
 import { useSocket } from "@/context/SocketContext";
@@ -11,38 +12,40 @@ import useSocketMessages from "@/hooks/useSocketMessages";
 const Sidebar = () => {
     const { user } = useUser();
     const currentUserId = user?.id;
-    const { 
-        conversations, 
-        conversationLoading, 
-        selectedConversation, 
-        setSelectedConversation, 
-        setMessages 
+    const router = useRouter();
+    const {
+        conversations,
+        conversationLoading,
+        selectedConversation,
+        setSelectedConversation,
+        setMessages
     } = useSocket();
-    
-    const { 
-        messagesMap, 
+
+    const {
+        messagesMap,
         unreadMap,
-        markConversationRead, 
+        markConversationRead,
         getMessages,
         setUnreadMap
     } = useSocketMessages(currentUserId);
 
     const handleConversationSelect = async (conversation) => {
         setSelectedConversation(conversation);
-        
+
         try {
-            // Always fetch fresh messages when selecting a conversation
-            await getMessages(conversation.conversationId);
-            
+            // First update the state
+            // await getMessages(conversation.conversationId);
+
             // Mark as read
             if (conversation.unreadCount > 0) {
                 markConversationRead(conversation.conversationId);
-                // Update unread count locally
                 setUnreadMap(prev => ({
                     ...prev,
                     [conversation.conversationId]: 0
                 }));
             }
+
+            router.push(`/talk/${conversation.conversationId}`);
         } catch (error) {
             console.error('Error loading messages:', error);
         }
@@ -53,12 +56,16 @@ const Sidebar = () => {
             setMessages(messagesMap[selectedConversation.conversationId]);
         }
     }, [messagesMap, selectedConversation]);
-
     // Update conversation display with unread counts
-    const displayConversations = conversations.map(conv => ({
-        ...conv,
-        unreadCount: unreadMap[conv.conversationId] || conv.unreadCount || 0
-    }));
+    const displayConversations = conversations.map(conv => {
+        const isSelected = selectedConversation?.conversationId === conv.conversationId;
+
+        return {
+            ...conv,
+            // If conversation is selected, always show 0 unread
+            unreadCount: isSelected ? 0 : (unreadMap[conv.conversationId] || conv.unreadCount || 0)
+        };
+    });
 
     return (
         <aside className="flex flex-col w-1/4 h-[calc(100dvh-5rem)] border-r-2 border-r-(--border-lines)">

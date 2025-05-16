@@ -6,6 +6,7 @@ import SenderBubble from './SenderBubble';
 import ReceiverBubble from './ReceiverBubble';
 import CustomScrollbar from './CustomScrollbar';
 import useSocketMessages from "@/hooks/useSocketMessages";
+import { useSocket } from "@/context/SocketContext";
 import { useRouter } from 'next/navigation';
 
 const ChatSection = ({ chatData, conversationData, currentUserId }) => {
@@ -15,6 +16,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
     const router = useRouter();
     const { sendMessage } = useSocketMessages(currentUserId);
     const firstLoadRef = useRef(true);
+    const { setSelectedConversation } = useSocket();
 
     // Scroll to bottom for new messages
     useEffect(() => {
@@ -30,7 +32,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
 
                 // For subsequent messages, check if we're near bottom
                 const isNearBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 100;
-                
+
                 if (isNearBottom) {
                     // Use setTimeout to ensure DOM is updated
                     setTimeout(() => {
@@ -50,7 +52,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
         if (conversationData?.friend?.clerkId && msgInput.trim()) {
             sendMessage(conversationData.friend.clerkId, msgInput.trim());
             setMsgInput('');
-            
+
             // Force scroll to bottom on send
             if (scrollContainerRef.current) {
                 const scrollElement = scrollContainerRef.current.querySelector('.ps');
@@ -71,32 +73,78 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
         }
     };
 
+    if (!conversationData) {
+        return (
+            <section className="w-3/4 h-[calc(100dvh-5rem)] flex flex-col items-center justify-center overflow-hidden bg-(--bg)">
+                <div className="flex flex-col items-center">
+                    {/* Pulsating circle animation */}
+                    <div className="relative w-20 h-20 mb-8">
+                        <div className="absolute inset-0 rounded-full bg-(--send-bubble-bg) opacity-25 animate-ping" />
+                        <div className="absolute inset-2 rounded-full bg-(--send-bubble-bg) opacity-50 animate-pulse" />
+                        <div className="absolute inset-4 rounded-full bg-(--send-bubble-bg) opacity-75" />
+                        <div className="absolute inset-0 w-full h-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Loading text */}
+                    <p className="text-lg text-(--primary-text) font-medium animate-pulse">
+                        Loading conversation...
+                    </p>
+
+                    {/* Animated dots */}
+                    <div className="flex mt-3 space-x-2">
+                        {[0, 1, 2].map((i) => (
+                            <div
+                                key={i}
+                                className="w-2 h-2 rounded-full bg-(--secondary-text)"
+                                style={{ animation: `bounce 1.4s infinite ease-in-out both`, animationDelay: `${i * 0.16}s` }}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                {/* Add some global styles for the animation */}
+                <style jsx global>{`
+                    @keyframes bounce {
+                        0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+                        40% { transform: scale(1); opacity: 1; }
+                    }
+                `}</style>
+            </section>
+        );
+    }
+
     return (
         <section className="w-3/4 h-[calc(100dvh-5rem)] flex flex-col overflow-hidden">
 
             <section className="flex justify-between items-center px-6 min-h-16 border-b-2 border-b-(--border-lines) bg-(--bg)">
                 <div className="flex items-center gap-3">
-                    <Image className="rounded-full object-cover w-10 h-10" 
-                        src={conversationData?.friend?.avatar} 
-                        alt={conversationData?.friend?.fullName} 
-                        width={64} height={64} 
+                    <Image className="rounded-full object-cover w-10 h-10"
+                        src={conversationData?.friend?.avatar}
+                        alt={conversationData?.friend?.fullName}
+                        width={64} height={64}
                     />
                     <span className="text-xl text-(--primary-text)">
                         {conversationData?.friend?.fullName}
                     </span>
                 </div>
                 <div className="relative">
-                    <button 
+                    <button
                         onClick={() => setShowMenu(!showMenu)}
                         className="p-1 hover:bg-(--hover-bg) rounded-full transition-colors"
                     >
                         <HiOutlineDotsVertical className="size-6 text-(--secondary-text)" />
                     </button>
-                    
+
                     {showMenu && (
                         <div className="absolute right-0 mt-2 w-48 py-2 bg-(--card-bg) rounded-xl border border-(--border-lines) shadow-lg z-50">
                             <button
                                 onClick={() => {
+                                    setSelectedConversation(null);
                                     setShowMenu(false);
                                     router.push('/talk');
                                 }}
@@ -114,13 +162,13 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
                 <CustomScrollbar>
                     <div className="flex flex-col p-4">
                         {chatData.map((msg, index) => {
-                            
-                            const isConsecutive = index > 0 && 
+
+                            const isConsecutive = index > 0 &&
                                 chatData[index - 1].from === msg.from &&
                                 ((new Date(msg.createdAt) - new Date(chatData[index - 1].createdAt)) < 120000); // 2 minutes threshold
 
-                            
-                            const isLastInGroup = index === chatData.length - 1 || 
+
+                            const isLastInGroup = index === chatData.length - 1 ||
                                 chatData[index + 1]?.from !== msg.from ||
                                 ((new Date(chatData[index + 1]?.createdAt) - new Date(msg.createdAt)) >= 120000);
 
@@ -144,7 +192,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
                 </CustomScrollbar>
             </div>
 
-            
+
             <div className="px-4 py-3 border-t border-t-(--border-lines) bg-(--bg)">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-(--input-bg) text-(--primary-text) border-2 border-(--border-lines) hover:border-(--hover-border) transition-colors">
                     <input
