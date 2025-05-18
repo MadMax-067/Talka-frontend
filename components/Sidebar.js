@@ -229,7 +229,7 @@ const Sidebar = () => {
                                                     Looking for someone new?
                                                 </span>
                                                 <span className="text-xs text-(--secondary-text)">
-                                                    Search for "{searchQuery}" among all users
+                                                    Search for &quot;{searchQuery}&quot; among all users
                                                 </span>
                                             </div>
                                         </div>
@@ -340,7 +340,7 @@ const Sidebar = () => {
                                     No users found
                                 </h3>
                                 <p className="text-sm text-(--secondary-text) mb-2">
-                                    No users match your search "{searchQuery}"
+                                    No users match your search &quot;{searchQuery}&quot;
                                 </p>
                                 <button
                                     className="flex items-center gap-2 px-4 py-1 rounded-full text-(--send-bubble-bg) border border-(--send-bubble-bg) hover:bg-(--send-bubble-bg) hover:text-white transition-colors mt-4"
