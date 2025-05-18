@@ -29,7 +29,8 @@ export default function useSocketMessages(currentUserId) {
         if (socket) fetchConversations();
     }, [socket]);
 
-    const sendMessage = useCallback((toUserId, content) => {
+    const sendMessage = useCallback((toUser, content) => {
+        const toUserId = toUser.clerkId;
         if (!socket || !toUserId || !content) return;
         const conversationId = generateConversationId(currentUserId, toUserId);
         const newMessage = {
@@ -58,12 +59,24 @@ export default function useSocketMessages(currentUserId) {
         setConversations((prev) => {
             const others = prev.filter(c => c.conversationId !== conversationId);
             const currentConv = prev.find(c => c.conversationId === conversationId);
-            const updated = {
-                ...currentConv,
-                lastMessage: content,
-                lastUpdated: new Date().toISOString()
-            };
-            return [updated, ...others];
+            if (currentConv) {
+                const updated = {
+                    ...currentConv,
+                    lastMessage: content,
+                    lastUpdated: new Date().toISOString()
+                };
+                return [updated, ...others];
+            } else {
+                const currentConv = {
+                    conversationId,
+                    friend: toUser,
+                    lastMessage: content,
+                    lastUpdated: newMessage.createdAt,
+                    unreadCount: 1
+                };
+                return [currentConv, ...others];
+            }
+
         });
 
         socket.emit(SOCKET_EVENTS.SEND_MESSAGE, { toUserId, content });
@@ -92,13 +105,11 @@ export default function useSocketMessages(currentUserId) {
     useEffect(() => {
         if (!socket) return;
 
-        const handleNewMessage = (message) => {
+        const handleNewMessage = ({ conversationData, message }) => {
             const { conversationId } = message;
 
             const isFromOther = message.from !== currentUserId;
             const isConversationOpen = selectedConversation && selectedConversation.conversationId === conversationId;
-            console.log(`isFromOther:${isFromOther}`)
-            console.log(`isConversationOpen:${isConversationOpen}`)
 
             // Update messages in both maps and context
             // setMessagesMap((prev) => {
@@ -134,19 +145,30 @@ export default function useSocketMessages(currentUserId) {
             setConversations((prev) => {
                 const others = prev.filter(c => c.conversationId !== conversationId);
                 const currentConv = prev.find(c => c.conversationId === conversationId);
-                if (!currentConv) return prev;
 
-                const updated = {
-                    ...currentConv,
-                    lastMessage: message.content,
-                    lastUpdated: message.createdAt,
-                    unreadCount: isFromOther && !isConversationOpen ?
-                        (currentConv.unreadCount || 0) + 1 :
-                        currentConv.unreadCount
-                };
-                return [updated, ...others].sort((a, b) =>
-                    new Date(b.lastUpdated) - new Date(a.lastUpdated)
-                );
+                if (currentConv) {
+                    const updated = {
+                        ...currentConv,
+                        lastMessage: message.content,
+                        lastUpdated: message.createdAt,
+                        unreadCount: isFromOther && !isConversationOpen ?
+                            (currentConv.unreadCount || 0) + 1 :
+                            currentConv.unreadCount
+                    };
+                    return [updated, ...others].sort((a, b) =>
+                        new Date(b.lastUpdated) - new Date(a.lastUpdated)
+                    );
+                } else {
+                    const updated = {
+                        ...conversationData[0],
+                        unreadCount: isFromOther && !isConversationOpen ?
+                            (conversationData[0].unreadCount || 0) + 1 :
+                            conversationData[0].unreadCount
+                    };
+                    return [updated, ...others].sort((a, b) =>
+                        new Date(b.lastUpdated) - new Date(a.lastUpdated)
+                    );
+                }
             });
 
             // Mark message as read if conversation is open and message is from someone else

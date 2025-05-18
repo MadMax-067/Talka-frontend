@@ -50,7 +50,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
 
     const handleSend = () => {
         if (conversationData?.friend?.clerkId && msgInput.trim()) {
-            sendMessage(conversationData.friend.clerkId, msgInput.trim());
+            sendMessage(conversationData.friend, msgInput.trim());
             setMsgInput('');
 
             // Force scroll to bottom on send
