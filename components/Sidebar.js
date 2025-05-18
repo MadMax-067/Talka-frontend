@@ -13,6 +13,7 @@ const Sidebar = () => {
     const { user } = useUser();
     const currentUserId = user?.id;
     const router = useRouter();
+    const [searchQuery, setSearchQuery] = useState('');
     const {
         conversations,
         conversationLoading,
@@ -33,9 +34,6 @@ const Sidebar = () => {
         setSelectedConversation(conversation);
 
         try {
-            // First update the state
-            // await getMessages(conversation.conversationId);
-
             // Mark as read
             if (conversation.unreadCount > 0) {
                 markConversationRead(conversation.conversationId);
@@ -56,8 +54,20 @@ const Sidebar = () => {
             setMessages(messagesMap[selectedConversation.conversationId]);
         }
     }, [messagesMap, selectedConversation]);
+    
+    // Filter conversations based on search query
+    const filteredConversations = conversations.filter(conv => {
+        if (!searchQuery.trim()) return true;
+        
+        const query = searchQuery.toLowerCase().trim();
+        const fullName = conv?.friend?.fullName?.toLowerCase() || '';
+        const username = conv?.friend?.username?.toLowerCase() || '';
+        
+        return fullName.includes(query) || username.includes(query);
+    });
+    
     // Update conversation display with unread counts
-    const displayConversations = conversations.map(conv => {
+    const displayConversations = filteredConversations.map(conv => {
         const isSelected = selectedConversation?.conversationId === conv.conversationId;
 
         return {
@@ -67,12 +77,39 @@ const Sidebar = () => {
         };
     });
 
+    // Handle search input change
+    const handleSearchChange = (e) => {
+        setSearchQuery(e.target.value);
+    };
+    
+    // Clear search with Escape key
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            setSearchQuery('');
+        }
+    };
+
     return (
         <aside className="flex flex-col w-1/4 h-[calc(100dvh-5rem)] border-r-2 border-r-(--border-lines)">
             <section className="w-full min-h-16 flex justify-center items-center border-b-2 border-b-(--border-lines)" >
-                <div className="flex justify-center items-center w-[calc(3.5/4*100%)] h-10 rounded-xl border-2 border-(--border-lines) bg-(--input-color)" >
+                <div className="flex justify-center items-center w-[calc(3.5/4*100%)] h-10 rounded-xl border-2 border-(--border-lines) bg-(--input-color) relative" >
                     <HiMagnifyingGlass className="size-6 mx-2 text-(--search-icon)" />
-                    <input className="w-full h-full outline-0 placeholder:text-(--search-icon)/50" type="text" placeholder="Search" />
+                    <input 
+                        className="w-full h-full outline-0 bg-transparent placeholder:text-(--search-icon)/50" 
+                        type="text" 
+                        placeholder="Search conversations" 
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        onKeyDown={handleSearchKeyDown}
+                    />
+                    {searchQuery && (
+                        <button 
+                            className="absolute right-2 text-xs text-(--secondary-text) hover:text-(--primary-text)"
+                            onClick={() => setSearchQuery('')}
+                        >
+                            Clear
+                        </button>
+                    )}
                 </div>
             </section>
             <CustomScrollbar>
@@ -91,20 +128,44 @@ const Sidebar = () => {
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-[calc(100dvh-13rem)] text-center px-6">
-                            <div className="relative group cursor-pointer mb-6">
-                                <div className="absolute inset-0 bg-(--primary-text) opacity-5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
-                                <RiChatNewLine className="size-16 text-(--secondary-text)" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-(--primary-text) mb-2">
-                                Start a Conversation
-                            </h3>
-                            <p className="text-sm text-(--secondary-text) mb-6">
-                                Connect with friends or start a new chat to begin messaging
-                            </p>
-                            <button className="flex items-center gap-2 px-6 py-2 rounded-full bg-(--send-bubble-bg) text-white hover:opacity-90 transition-opacity">
-                                <RiUserAddLine className="size-5" />
-                                <span>Find People</span>
-                            </button>
+                            {searchQuery ? (
+                                // Show "No results" when searching with no matches
+                                <>
+                                    <div className="relative mb-6">
+                                        <HiMagnifyingGlass className="size-16 text-(--secondary-text)" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-(--primary-text) mb-2">
+                                        No matches found
+                                    </h3>
+                                    <p className="text-sm text-(--secondary-text) mb-2">
+                                        No conversations match your search
+                                    </p>
+                                    <button 
+                                        className="text-sm text-(--send-bubble-bg) hover:underline mt-2"
+                                        onClick={() => setSearchQuery('')}
+                                    >
+                                        Clear search
+                                    </button>
+                                </>
+                            ) : (
+                                // Show empty state when no conversations exist
+                                <>
+                                    <div className="relative group cursor-pointer mb-6">
+                                        <div className="absolute inset-0 bg-(--primary-text) opacity-5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
+                                        <RiChatNewLine className="size-16 text-(--secondary-text)" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-(--primary-text) mb-2">
+                                        Start a Conversation
+                                    </h3>
+                                    <p className="text-sm text-(--secondary-text) mb-6">
+                                        Connect with friends or start a new chat to begin messaging
+                                    </p>
+                                    <button className="flex items-center gap-2 px-6 py-2 rounded-full bg-(--send-bubble-bg) text-white hover:opacity-90 transition-opacity">
+                                        <RiUserAddLine className="size-5" />
+                                        <span>Find People</span>
+                                    </button>
+                                </>
+                            )}
                         </div>
                     )
                 ) : (
