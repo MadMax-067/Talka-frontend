@@ -19,6 +19,7 @@ const Sidebar = () => {
     const [searchMode, setSearchMode] = useState('conversations'); // 'conversations' or 'people'
     const [searchingPeople, setSearchingPeople] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+    const { isMobile } = useSocket();
 
     const {
         conversations,
@@ -169,9 +170,9 @@ const Sidebar = () => {
     };
 
     return (
-        <aside className="flex flex-col w-1/4 h-[calc(100dvh-5rem)] border-r-2 border-r-(--border-lines)">
+        <aside className="flex flex-col w-full md:w-1/4 h-[calc(100dvh-5rem)] md:border-r-2 md:border-r-(--border-lines)">
             <section className="w-full min-h-16 flex justify-center items-center border-b-2 border-b-(--border-lines)" >
-                <div className="flex justify-center items-center w-[calc(3.5/4*100%)] h-10 rounded-xl border-2 border-(--border-lines) bg-(--input-color) relative" >
+                <div className="flex justify-center items-center w-[calc(3.5/4*100%)] md:w-[calc(3.5/4*100%)] h-10 rounded-xl border-2 border-(--border-lines) bg-(--input-color) relative" >
                     {searchMode === 'people' && (
                         <button
                             onClick={switchToConversationsSearch}

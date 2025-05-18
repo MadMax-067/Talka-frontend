@@ -4,8 +4,8 @@ import "./globals.css";
 import { SocketProvider } from "@/context/SocketContext";
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
-import localFont from 'next/font/local'
-
+import localFont from 'next/font/local';
+import RootLayoutClient from "@/components/RootLayoutClient";
 const SfProDisplayRegular = localFont({ src: '../fonts/SF-Pro-Display-Regular.otf' })
 
 
@@ -32,10 +32,7 @@ export default function RootLayout({ children }) {
           className={`${SfProDisplayRegular.className} antialiased`}
         >
           <SocketProvider>
-            <Navbar />
-            <main className="flex justify-center">
-              {children}
-            </main>
+            <RootLayoutClient>{children}</RootLayoutClient>
           </SocketProvider>
         </body>
       </html>

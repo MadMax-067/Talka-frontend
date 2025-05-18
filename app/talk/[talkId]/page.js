@@ -16,16 +16,13 @@ const Page = ({ params }) => {
         redirect('/')
     }
 
-    const { selectedConversation, setSelectedConversation, messages, setMessages } = useSocket();
+    const { selectedConversation, setSelectedConversation, messages, setMessages, isMobile } = useSocket();
     const { getMessages } = useSocketMessages(currentUserId);
 
     useEffect(() => {
         const initializeChat = async () => {
             const { talkId } = await params;
-            
-            // if (talkId && (!selectedConversation || selectedConversation.conversationId !== talkId)) {
                 await getMessages(talkId);
-            // }
         };
 
         initializeChat();
@@ -42,7 +39,7 @@ const Page = ({ params }) => {
 
     return (
         <>
-            <Sidebar />
+            {!isMobile && <Sidebar />}
             <ChatSection 
                 currentUserId={currentUserId}
                 conversationData={selectedConversation}

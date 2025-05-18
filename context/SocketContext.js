@@ -15,7 +15,24 @@ export const SocketProvider = ({ children }) => {
     const [conversationLoading, setConversationLoading] = useState(false);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [messages, setMessages] = useState([]);
+    const [isMobile, setIsMobile] = useState(false);
     const socketRef = useRef(null);
+
+    // Check if we're on mobile
+      useEffect(() => {
+        const checkIfMobile = () => {
+          setIsMobile(window.innerWidth < 768); // Standard md breakpoint
+        };
+        
+        // Initial check
+        checkIfMobile();
+        
+        // Listen for window resize
+        window.addEventListener('resize', checkIfMobile);
+        
+        // Cleanup
+        return () => window.removeEventListener('resize', checkIfMobile);
+      }, []);
 
     useEffect(() => {
         const init = async () => {
@@ -48,7 +65,7 @@ export const SocketProvider = ({ children }) => {
     }, [isSignedIn]);
 
     return (
-        <SocketContext.Provider value={{ socket, conversations, setConversations, conversationLoading, setConversationLoading ,selectedConversation, setSelectedConversation, messages, setMessages}}>
+        <SocketContext.Provider value={{ socket, conversations, setConversations, conversationLoading, setConversationLoading ,selectedConversation, setSelectedConversation, messages, setMessages,isMobile}}>
             {children}
         </SocketContext.Provider>
     );

@@ -3,7 +3,7 @@ import { RiChatSmile2Line } from 'react-icons/ri'
 
 const ChatPlaceholder = () => {
     return (
-        <section className="w-3/4 max-h-[calc(100dvh-5rem)] flex flex-col">
+        <section className="w-3/4 max-h-[calc(100dvh-5rem)] hidden md:flex flex-col">
             <div className="h-full flex flex-col items-center justify-center gap-6 p-8">
                 
                 <div className="relative group cursor-pointer">

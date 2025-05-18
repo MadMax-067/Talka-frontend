@@ -1,13 +1,31 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { HiOutlineDotsVertical } from "react-icons/hi";
-import { IoSend, IoClose } from "react-icons/io5";
+import { IoSend, IoClose, IoChevronBack } from "react-icons/io5";
 import SenderBubble from './SenderBubble';
 import ReceiverBubble from './ReceiverBubble';
 import CustomScrollbar from './CustomScrollbar';
 import useSocketMessages from "@/hooks/useSocketMessages";
 import { useSocket } from "@/context/SocketContext";
 import { useRouter } from 'next/navigation';
+
+// Add this function to your component or utils
+const formatLastSeen = (lastSeenDate) => {
+    const lastSeen = new Date(lastSeenDate);
+    const now = new Date();
+    const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'just now';
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return lastSeen.toLocaleDateString();
+};
 
 const ChatSection = ({ chatData, conversationData, currentUserId }) => {
     const scrollContainerRef = useRef(null);
@@ -16,7 +34,8 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
     const router = useRouter();
     const { sendMessage } = useSocketMessages(currentUserId);
     const firstLoadRef = useRef(true);
-    const { setSelectedConversation } = useSocket();
+    const { setSelectedConversation, isMobile } = useSocket();
+    const inputBarRef = useRef(null);
 
     // Scroll to bottom for new messages
     useEffect(() => {
@@ -48,6 +67,41 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
         };
     }, [chatData]);
 
+    // Calculate remaining height for chat area based on header and input field
+    useEffect(() => {
+        const updateChatAreaHeight = () => {
+            if (isMobile) {
+                const header = document.querySelector('.chat-header');
+                const inputBar = document.querySelector('.input-bar');
+                
+                if (header && inputBar && scrollContainerRef.current) {
+                    const headerHeight = header.offsetHeight;
+                    const inputHeight = inputBar.offsetHeight;
+                    const windowHeight = window.innerHeight;
+                    
+                    // Calculate remaining height for chat area
+                    const chatAreaHeight = windowHeight - headerHeight - inputHeight;
+                    
+                    // Apply the calculated height to chat area
+                    scrollContainerRef.current.style.height = `${chatAreaHeight}px`;
+                }
+            } else {
+                // Reset height on desktop
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.style.height = '';
+                }
+            }
+        };
+
+        // Run on mount and when window resizes
+        updateChatAreaHeight();
+        window.addEventListener('resize', updateChatAreaHeight);
+        
+        return () => {
+            window.removeEventListener('resize', updateChatAreaHeight);
+        };
+    }, [isMobile]);
+
     const handleSend = () => {
         if (conversationData?.friend?.clerkId && msgInput.trim()) {
             sendMessage(conversationData.friend, msgInput.trim());
@@ -75,7 +129,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
 
     if (!conversationData) {
         return (
-            <section className="w-3/4 h-[calc(100dvh-5rem)] flex flex-col items-center justify-center overflow-hidden bg-(--bg)">
+            <section className="w-full h-[calc(100dvh)] md:h-[calc(100dvh-5rem)] md:w-3/4 flex flex-col items-center justify-center overflow-hidden bg-(--bg)">
                 <div className="flex flex-col items-center">
                     {/* Pulsating circle animation */}
                     <div className="relative w-20 h-20 mb-8">
@@ -119,18 +173,51 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
     }
 
     return (
-        <section className="w-3/4 h-[calc(100dvh-5rem)] flex flex-col overflow-hidden">
-
-            <section className="flex justify-between items-center px-6 min-h-16 border-b-2 border-b-(--border-lines) bg-(--bg)">
-                <div className="flex items-center gap-3">
-                    <Image className="rounded-full object-cover w-10 h-10"
+        <section className="w-full h-[calc(100dvh)] md:h-[calc(100dvh-5rem)] md:w-3/4 flex flex-col overflow-hidden">
+            {/* Add the chat-header class to header for height calculations */}
+            <section className="chat-header flex justify-start items-center px-3 md:px-6 min-h-16 border-b-2 border-b-(--border-lines) bg-(--bg)">
+                {isMobile && (
+                    <button
+                        onClick={() => {
+                            setSelectedConversation(null);
+                            router.push('/talk');
+                        }}
+                        className="p-2 hover:bg-(--hover-bg) rounded-full transition-colors"
+                    >
+                        <IoChevronBack className="size-5 text-(--secondary-text)" />
+                    </button>
+                )}
+                <div className="flex items-center gap-3 mr-auto">
+                    <Image 
+                        className="rounded-full object-cover w-10 h-10"
                         src={conversationData?.friend?.avatar}
                         alt={conversationData?.friend?.fullName}
-                        width={64} height={64}
+                        width={64} 
+                        height={64}
                     />
-                    <span className="text-xl text-(--primary-text)">
-                        {conversationData?.friend?.fullName}
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="text-xl text-(--primary-text) truncate max-w-[150px] sm:max-w-[250px]">
+                            {conversationData?.friend?.fullName}
+                        </span>
+                        <div className="flex items-center gap-1 text-xs">
+                            {conversationData?.friend?.isOnline ? (
+                                <>
+                                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                                    <span className="text-(--secondary-text)">Online</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="h-2 w-2 rounded-full bg-gray-400"></span>
+                                    <span className="text-(--secondary-text)">
+                                        {conversationData?.friend?.lastSeen 
+                                            ? `Last seen ${formatLastSeen(conversationData.friend.lastSeen)}`
+                                            : 'Offline'
+                                        }
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
                 <div className="relative">
                     <button
@@ -158,6 +245,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
                 </div>
             </section>
 
+            {/* Use flex-1 min-h-0 to allow for dynamic height calculation in JS */}
             <div ref={scrollContainerRef} className="flex-1 min-h-0">
                 <CustomScrollbar>
                     <div className="flex flex-col p-4">
@@ -220,8 +308,8 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
                 </CustomScrollbar>
             </div>
 
-
-            <div className="px-4 py-3 border-t border-t-(--border-lines) bg-(--bg)">
+            {/* Add the input-bar class for height calculations */}
+            <div className="input-bar px-4 py-3 border-t border-t-(--border-lines) bg-(--bg)">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-(--input-bg) text-(--primary-text) border-2 border-(--border-lines) hover:border-(--hover-border) transition-colors">
                     <input
                         type="text"
