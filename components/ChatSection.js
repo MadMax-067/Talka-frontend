@@ -161,33 +161,61 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
             <div ref={scrollContainerRef} className="flex-1 min-h-0">
                 <CustomScrollbar>
                     <div className="flex flex-col p-4">
-                        {chatData.map((msg, index) => {
+                        {chatData.length > 0 ? (
+                            chatData.map((msg, index) => {
 
-                            const isConsecutive = index > 0 &&
-                                chatData[index - 1].from === msg.from &&
-                                ((new Date(msg.createdAt) - new Date(chatData[index - 1].createdAt)) < 120000); // 2 minutes threshold
+                                const isConsecutive = index > 0 &&
+                                    chatData[index - 1].from === msg.from &&
+                                    ((new Date(msg.createdAt) - new Date(chatData[index - 1].createdAt)) < 120000); // 2 minutes threshold
 
 
-                            const isLastInGroup = index === chatData.length - 1 ||
-                                chatData[index + 1]?.from !== msg.from ||
-                                ((new Date(chatData[index + 1]?.createdAt) - new Date(msg.createdAt)) >= 120000);
+                                const isLastInGroup = index === chatData.length - 1 ||
+                                    chatData[index + 1]?.from !== msg.from ||
+                                    ((new Date(chatData[index + 1]?.createdAt) - new Date(msg.createdAt)) >= 120000);
 
-                            return msg.from === currentUserId ? (
-                                <SenderBubble
-                                    key={msg.id}
-                                    chat={msg}
-                                    isConsecutive={isConsecutive}
-                                    showTime={isLastInGroup}
-                                />
-                            ) : (
-                                <ReceiverBubble
-                                    key={msg.id}
-                                    chat={msg}
-                                    isConsecutive={isConsecutive}
-                                    showTime={isLastInGroup}
-                                />
-                            );
-                        })}
+                                return msg.from === currentUserId ? (
+                                    <SenderBubble
+                                        key={msg.id}
+                                        chat={msg}
+                                        isConsecutive={isConsecutive}
+                                        showTime={isLastInGroup}
+                                    />
+                                ) : (
+                                    <ReceiverBubble
+                                        key={msg.id}
+                                        chat={msg}
+                                        isConsecutive={isConsecutive}
+                                        showTime={isLastInGroup}
+                                    />
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full py-16">
+                                <div className="w-20 h-20 rounded-full bg-(--input-color) flex items-center justify-center mb-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-(--secondary-text)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-medium text-(--primary-text) mb-2">
+                                    No messages yet
+                                </h3>
+                                <p className="text-center text-sm text-(--secondary-text) max-w-sm mb-6">
+                                    Say hello to {conversationData?.friend?.fullName} to start the conversation!
+                                </p>
+                                <button 
+                                    onClick={() => {
+                                        setMsgInput("👋 Hello!");
+                                        // Focus the input field
+                                        setTimeout(() => {
+                                            document.querySelector('input[type="text"]').focus();
+                                        }, 0);
+                                    }}
+                                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-(--send-bubble-bg) text-white hover:opacity-90 transition-opacity"
+                                >
+                                    <span>Send a greeting</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </CustomScrollbar>
             </div>
