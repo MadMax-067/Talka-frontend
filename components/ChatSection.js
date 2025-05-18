@@ -36,6 +36,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
     const firstLoadRef = useRef(true);
     const { setSelectedConversation, isMobile } = useSocket();
     const inputBarRef = useRef(null);
+    const [keyboardOpen, setKeyboardOpen] = useState(false);
 
     // Scroll to bottom for new messages
     useEffect(() => {
@@ -67,7 +68,7 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
         };
     }, [chatData]);
 
-    // Calculate remaining height for chat area based on header and input field
+    // Enhanced calculation for chat area height that also detects keyboard
     useEffect(() => {
         const updateChatAreaHeight = () => {
             if (isMobile) {
@@ -79,11 +80,37 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
                     const inputHeight = inputBar.offsetHeight;
                     const windowHeight = window.innerHeight;
                     
-                    // Calculate remaining height for chat area
-                    const chatAreaHeight = windowHeight - headerHeight - inputHeight;
+                    // Visual viewport helps detect keyboard presence on mobile
+                    const visualViewportHeight = window.visualViewport?.height || windowHeight;
                     
-                    // Apply the calculated height to chat area
-                    scrollContainerRef.current.style.height = `${chatAreaHeight}px`;
+                    // If visual viewport is significantly smaller than window, keyboard is likely open
+                    // For iOS, the difference might be smaller, so use a more flexible threshold
+                    const isKeyboardOpen = windowHeight - visualViewportHeight > 100;
+                    
+                    // Only update state if there's a change to prevent unnecessary renders
+                    if (keyboardOpen !== isKeyboardOpen) {
+                        setKeyboardOpen(isKeyboardOpen);
+                    }
+                    
+                    // Calculate remaining height for chat area
+                    // This directly implements your request: mobile height - header - input - keyboard
+                    const availableHeight = isKeyboardOpen 
+                        ? visualViewportHeight - headerHeight - inputHeight 
+                        : windowHeight - headerHeight - inputHeight;
+                    
+                    // Apply calculated height directly
+                    scrollContainerRef.current.style.height = `${Math.max(100, availableHeight)}px`;
+                    
+                    // If keyboard just opened or closed, scroll to bottom after a small delay
+                    if (chatData.length > 0) {
+                        const scrollElement = scrollContainerRef.current.querySelector('.ps');
+                        if (scrollElement) {
+                            // Slightly longer timeout to account for keyboard animation
+                            setTimeout(() => {
+                                scrollElement.scrollTop = scrollElement.scrollHeight;
+                            }, 150);
+                        }
+                    }
                 }
             } else {
                 // Reset height on desktop
@@ -93,14 +120,32 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
             }
         };
 
-        // Run on mount and when window resizes
+        // Initial update
         updateChatAreaHeight();
+        
+        // Add event listeners for all possible viewport changes
         window.addEventListener('resize', updateChatAreaHeight);
+        
+        // Use visualViewport API for more accurate keyboard detection
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateChatAreaHeight);
+            window.visualViewport.addEventListener('scroll', updateChatAreaHeight);
+        }
+        
+        // Add specific events for iOS
+        window.addEventListener('focusin', updateChatAreaHeight);
+        window.addEventListener('focusout', updateChatAreaHeight);
         
         return () => {
             window.removeEventListener('resize', updateChatAreaHeight);
+            window.removeEventListener('focusin', updateChatAreaHeight);
+            window.removeEventListener('focusout', updateChatAreaHeight);
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', updateChatAreaHeight);
+                window.visualViewport.removeEventListener('scroll', updateChatAreaHeight);
+            }
         };
-    }, [isMobile]);
+    }, [isMobile, chatData.length, keyboardOpen]);
 
     const handleSend = () => {
         if (conversationData?.friend?.clerkId && msgInput.trim()) {
@@ -246,7 +291,10 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
             </section>
 
             {/* Use flex-1 min-h-0 to allow for dynamic height calculation in JS */}
-            <div ref={scrollContainerRef} className="flex-1 min-h-0">
+            <div 
+                ref={scrollContainerRef} 
+                className={`flex-1 min-h-0 ${keyboardOpen ? 'keyboard-open' : ''}`}
+            >
                 <CustomScrollbar>
                     <div className="flex flex-col p-4">
                         {chatData.length > 0 ? (
