@@ -1,12 +1,20 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { IoCheckmarkDone } from "react-icons/io5";
 import { format } from 'date-fns';
 import { motion } from "motion/react"
 
 const SenderBubble = ({ chat, isConsecutive, showTime }) => {
+    const [wasRead, setWasRead] = useState(false);
     const formattedTime = chat?.createdAt 
         ? format(new Date(chat.createdAt), 'hh:mm a')
         : '';
+    
+    // Track when message changes from unread to read
+    useEffect(() => {
+        if (chat?.read && !wasRead) {
+            setWasRead(true);
+        }
+    }, [chat?.read, wasRead]);
 
     return (
         <div className={`flex flex-col items-end ${isConsecutive ? 'mb-1' : 'mb-4'}`}>
@@ -34,7 +42,21 @@ const SenderBubble = ({ chat, isConsecutive, showTime }) => {
                     transition={{ delay: 0.2 }}
                 >
                     <span>{formattedTime}</span>
-                    <IoCheckmarkDone className={`${chat?.read ? 'text-blue-500' : 'text-gray-400'}`} />
+                    <motion.div
+                        initial={false}
+                        animate={{
+                            // All three animations happen in sequence
+                            color: chat?.read ? "#3b82f6" : "#9ca3af", // Blue or gray
+                            scale: wasRead ? [1, 1.5, 1] : 1,
+                            rotate: wasRead ? [0, 180, 360] : 0
+                        }}
+                        transition={{
+                            duration: 0.5,
+                            ease: "easeInOut"
+                        }}
+                    >
+                        <IoCheckmarkDone />
+                    </motion.div>
                 </motion.div>
             )}
         </div>
