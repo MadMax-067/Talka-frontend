@@ -1,3 +1,4 @@
+"use client"
 import React from 'react'
 import {
     SignInButton,
@@ -6,9 +7,25 @@ import {
     SignedOut,
     UserButton,
 } from '@clerk/nextjs'
+import { useSocket } from "@/context/SocketContext" // Assuming you have this context
 import { RiChatSmile2Line } from 'react-icons/ri'
 
 const Navbar = () => {
+    const { socket } = useSocket?.() || {}; // Use optional chaining in case context isn't available
+
+    const handleSignOut = () => {
+        try {
+            if (socket) {
+                socket.disconnect();
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Error during signout cleanup:', error);
+            return true;
+        }
+    };
+
     return (
         <nav className="flex justify-between items-center px-6 py-4 gap-4 h-20 border-b-2 border-b-(--border-lines)">
             <span className="flex items-center text-3xl font-semibold tracking-wider" >
@@ -33,7 +50,11 @@ const Navbar = () => {
                 </div>
             </SignedOut>
             <SignedIn>
-                <UserButton />
+                <UserButton 
+                    signInUrl="/"
+                    afterSignOutUrl="/"
+                    beforeSignOutAll={handleSignOut}
+                />
             </SignedIn>
         </nav>
     )
