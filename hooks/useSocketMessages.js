@@ -189,6 +189,24 @@ export default function useSocketMessages(currentUserId) {
             }
         };
 
+        const handleMessageRead = ({ conversationId, messageIds }) => {
+
+            setMessages(prev => {
+
+                // Mark messages as read
+                return prev.map(msg => {
+                    if (messageIds.includes(msg._id)) {
+                        return { ...msg, read: true };
+                    }
+                    if (msg._id.startsWith('temp-') && msg.from === currentUserId) {
+                        return { ...msg, read: true };
+                    }
+
+                    return msg;
+                });
+            });
+        };
+
         const handleMessageHistory = ({ conversationId, messages, page }) => {
             setMessagesMap((prev) => ({
                 ...prev,
@@ -240,6 +258,7 @@ export default function useSocketMessages(currentUserId) {
         socket.on(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
         socket.on(SOCKET_EVENTS.MESSAGE_HISTORY, handleMessageHistory);
         socket.on(SOCKET_EVENTS.UPDATE_UNREAD_COUNT, handleUnreadCount);
+        socket.on(SOCKET_EVENTS.MESSAGE_READ, handleMessageRead);
         socket.on(SOCKET_EVENTS.TYPING, handleTyping);
         socket.on(SOCKET_EVENTS.STOP_TYPING, handleStopTyping);
         socket.on(SOCKET_EVENTS.USER_ONLINE, handleUserOnline);
@@ -250,6 +269,7 @@ export default function useSocketMessages(currentUserId) {
             socket.off(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
             socket.off(SOCKET_EVENTS.MESSAGE_HISTORY, handleMessageHistory);
             socket.off(SOCKET_EVENTS.UPDATE_UNREAD_COUNT, handleUnreadCount);
+            socket.off(SOCKET_EVENTS.MESSAGE_READ, handleMessageRead);
             socket.off(SOCKET_EVENTS.TYPING, handleTyping);
             socket.off(SOCKET_EVENTS.STOP_TYPING, handleStopTyping);
             socket.off(SOCKET_EVENTS.USER_ONLINE, handleUserOnline);

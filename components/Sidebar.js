@@ -37,8 +37,6 @@ const Sidebar = () => {
     } = useSocketMessages(currentUserId);
 
     const handleConversationSelect = async (conversation) => {
-        console.log("select:")
-        console.dir(conversation)
         setSelectedConversation(conversation);
 
         try {
@@ -149,13 +147,8 @@ const Sidebar = () => {
         setSearchingPeople(true);
 
         try {
-            // Make the API call and set results
             const result = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/search?q=${query}&exclude=${currentUserId}`);
-            
-            // Log results for debugging
-            console.log("Search results:", result.data.data);
-            
-            // Set search results only if we're still in people search mode
+
             if (searchMode === 'people') {
                 setSearchResults(result.data.data || []);
             }

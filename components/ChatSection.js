@@ -175,14 +175,14 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
 
                                 return msg.from === currentUserId ? (
                                     <SenderBubble
-                                        key={msg.id}
+                                        key={msg._id}
                                         chat={msg}
                                         isConsecutive={isConsecutive}
                                         showTime={isLastInGroup}
                                     />
                                 ) : (
                                     <ReceiverBubble
-                                        key={msg.id}
+                                        key={msg._id}
                                         chat={msg}
                                         isConsecutive={isConsecutive}
                                         showTime={isLastInGroup}

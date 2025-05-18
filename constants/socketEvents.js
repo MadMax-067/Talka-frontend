@@ -5,6 +5,7 @@ export const SOCKET_EVENTS = {
     NEW_MESSAGE: "receive-message",
     UPDATE_UNREAD_COUNT: "update-unread-count",
     MARK_READ: "mark-as-read",
+    MESSAGE_READ: "message-read",
     PRIVATE_MESSAGE: "private-message",
     GET_MESSAGES: "get-messages",
     MESSAGE_HISTORY: "message-history",
