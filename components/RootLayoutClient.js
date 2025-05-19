@@ -8,9 +8,9 @@ import { useSocket } from "@/context/SocketContext";
 
 export default function RootLayoutClient({ children }) {
   const pathname = usePathname();
-  const { isMobile } = useSocket();
-  const isChatPage = pathname?.startsWith('/talk/');
-  const hideNavbar = isChatPage && isMobile;
+  const { isMobile,selectedConversation } = useSocket();
+  // const isChatPage = pathname?.startsWith('/talk/');
+  const hideNavbar = isMobile && selectedConversation;
 
   return (
     <>

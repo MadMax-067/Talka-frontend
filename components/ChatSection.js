@@ -27,7 +27,7 @@ const formatLastSeen = (lastSeenDate) => {
     return lastSeen.toLocaleDateString();
 };
 
-const ChatSection = ({ chatData, conversationData, currentUserId }) => {
+const ChatSection = ({ chatData, conversationData, currentUserId, isLoading = false }) => {
     const scrollContainerRef = useRef(null);
     const [showMenu, setShowMenu] = useState(false);
     const [msgInput, setMsgInput] = useState('');
@@ -39,113 +39,116 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
     const [keyboardOpen, setKeyboardOpen] = useState(false);
 
     // Scroll to bottom for new messages
+       // Update the scrolling behavior in ChatSection.js
+    
+    // Replace your existing scroll-to-bottom useEffect with this enhanced version
     useEffect(() => {
+        // Function to scroll to bottom
+        const scrollToBottom = () => {
+            if (!scrollContainerRef.current) return;
+            
+            const scrollElement = scrollContainerRef.current.querySelector('.ps');
+            if (!scrollElement) return;
+            
+            // Wait a bit for render to complete
+            setTimeout(() => {
+                scrollElement.scrollTop = scrollElement.scrollHeight;
+            }, 100);
+        };
+    
+        // Check if we can scroll (container exists and has messages)
         if (scrollContainerRef.current && chatData.length > 0) {
             const scrollElement = scrollContainerRef.current.querySelector('.ps');
+            
             if (scrollElement) {
-                // Always scroll on first load
+                // Always scroll on first load of a conversation
                 if (firstLoadRef.current) {
-                    scrollElement.scrollTop = scrollElement.scrollHeight;
+                    scrollToBottom();
                     firstLoadRef.current = false;
                     return;
                 }
-
-                // For subsequent messages, check if we're near bottom
-                const isNearBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 100;
-
+    
+                // For subsequent messages, check if we're near bottom before auto-scrolling
+                const isNearBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 200;
+                
                 if (isNearBottom) {
-                    // Use setTimeout to ensure DOM is updated
-                    setTimeout(() => {
-                        scrollElement.scrollTop = scrollElement.scrollHeight;
-                    }, 0);
+                    scrollToBottom();
                 }
             }
         }
-
+    
         // Reset firstLoad when conversation changes
         return () => {
             firstLoadRef.current = true;
         };
-    }, [chatData]);
+    }, [chatData, conversationData?.conversationId]); // Add conversationId to deps to detect conversation changes
+    
+    // Add a new useEffect specifically for scrolling when a conversation is opened
+    useEffect(() => {
+        // Only run this when conversationData changes (conversation is opened/switched)
+        if (conversationData?.conversationId && !isLoading) {
+            // Short delay to ensure component is fully rendered
+            const timerId = setTimeout(() => {
+                if (scrollContainerRef.current) {
+                    const scrollElement = scrollContainerRef.current.querySelector('.ps');
+                    if (scrollElement) {
+                        scrollElement.scrollTop = scrollElement.scrollHeight;
+                    }
+                }
+            }, 200);
+            
+            return () => clearTimeout(timerId);
+        }
+    }, [conversationData?.conversationId, isLoading]);
 
     // Enhanced calculation for chat area height that also detects keyboard
-    useEffect(() => {
-        const updateChatAreaHeight = () => {
-            if (isMobile) {
-                const header = document.querySelector('.chat-header');
-                const inputBar = document.querySelector('.input-bar');
+       // Update the keyboard handling in your updateChatAreaHeight function
+    const updateChatAreaHeight = () => {
+        if (isMobile) {
+            const header = document.querySelector('.chat-header');
+            const inputBar = document.querySelector('.input-bar');
+            
+            if (header && inputBar && scrollContainerRef.current) {
+                const headerHeight = header.offsetHeight;
+                const inputHeight = inputBar.offsetHeight;
+                const windowHeight = window.innerHeight;
                 
-                if (header && inputBar && scrollContainerRef.current) {
-                    const headerHeight = header.offsetHeight;
-                    const inputHeight = inputBar.offsetHeight;
-                    const windowHeight = window.innerHeight;
+                // Visual viewport helps detect keyboard presence on mobile
+                const visualViewportHeight = window.visualViewport?.height || windowHeight;
+                
+                // If visual viewport is significantly smaller than window, keyboard is likely open
+                const isKeyboardOpen = windowHeight - visualViewportHeight > 100;
+                
+                // Only update state if there's a change to prevent unnecessary renders
+                if (keyboardOpen !== isKeyboardOpen) {
+                    setKeyboardOpen(isKeyboardOpen);
                     
-                    // Visual viewport helps detect keyboard presence on mobile
-                    const visualViewportHeight = window.visualViewport?.height || windowHeight;
-                    
-                    // If visual viewport is significantly smaller than window, keyboard is likely open
-                    // For iOS, the difference might be smaller, so use a more flexible threshold
-                    const isKeyboardOpen = windowHeight - visualViewportHeight > 100;
-                    
-                    // Only update state if there's a change to prevent unnecessary renders
-                    if (keyboardOpen !== isKeyboardOpen) {
-                        setKeyboardOpen(isKeyboardOpen);
-                    }
-                    
-                    // Calculate remaining height for chat area
-                    // This directly implements your request: mobile height - header - input - keyboard
-                    const availableHeight = isKeyboardOpen 
-                        ? visualViewportHeight - headerHeight - inputHeight 
-                        : windowHeight - headerHeight - inputHeight;
-                    
-                    // Apply calculated height directly
-                    scrollContainerRef.current.style.height = `${Math.max(100, availableHeight)}px`;
-                    
-                    // If keyboard just opened or closed, scroll to bottom after a small delay
+                    // When keyboard opens or closes, scroll to bottom after a brief delay
                     if (chatData.length > 0) {
-                        const scrollElement = scrollContainerRef.current.querySelector('.ps');
-                        if (scrollElement) {
-                            // Slightly longer timeout to account for keyboard animation
-                            setTimeout(() => {
+                        setTimeout(() => {
+                            const scrollElement = scrollContainerRef.current?.querySelector('.ps');
+                            if (scrollElement) {
                                 scrollElement.scrollTop = scrollElement.scrollHeight;
-                            }, 150);
-                        }
+                            }
+                        }, 300); // Longer timeout to account for keyboard animation
                     }
                 }
-            } else {
-                // Reset height on desktop
-                if (scrollContainerRef.current) {
-                    scrollContainerRef.current.style.height = '';
-                }
+                
+                // Calculate remaining height for chat area
+                const availableHeight = isKeyboardOpen 
+                    ? visualViewportHeight - headerHeight - inputHeight 
+                    : windowHeight - headerHeight - inputHeight;
+                
+                // Apply calculated height directly
+                scrollContainerRef.current.style.height = `${Math.max(100, availableHeight)}px`;
             }
-        };
-
-        // Initial update
-        updateChatAreaHeight();
-        
-        // Add event listeners for all possible viewport changes
-        window.addEventListener('resize', updateChatAreaHeight);
-        
-        // Use visualViewport API for more accurate keyboard detection
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', updateChatAreaHeight);
-            window.visualViewport.addEventListener('scroll', updateChatAreaHeight);
+        } else {
+            // Reset height on desktop
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.style.height = '';
+            }
         }
-        
-        // Add specific events for iOS
-        window.addEventListener('focusin', updateChatAreaHeight);
-        window.addEventListener('focusout', updateChatAreaHeight);
-        
-        return () => {
-            window.removeEventListener('resize', updateChatAreaHeight);
-            window.removeEventListener('focusin', updateChatAreaHeight);
-            window.removeEventListener('focusout', updateChatAreaHeight);
-            if (window.visualViewport) {
-                window.visualViewport.removeEventListener('resize', updateChatAreaHeight);
-                window.visualViewport.removeEventListener('scroll', updateChatAreaHeight);
-            }
-        };
-    }, [isMobile, chatData.length, keyboardOpen]);
+    };
 
     const handleSend = () => {
         if (conversationData?.friend?.clerkId && msgInput.trim()) {
@@ -171,6 +174,70 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
             handleSend();
         }
     };
+
+    // Enhanced loading state with animation
+    if (isLoading) {
+        return (
+            <section className="w-full h-[calc(100dvh)] md:h-[calc(100dvh-5rem)] md:w-3/4 flex flex-col items-center justify-center overflow-hidden bg-(--bg)">
+                <div className="flex flex-col items-center justify-center">
+                    {/* Enhanced floating chat bubbles animation */}
+                    <div className="relative w-32 h-32 mb-6">
+                        {/* More bubbles with staggered animations */}
+                        <div className="absolute left-0 top-6 w-6 h-6 bg-(--send-bubble-bg) rounded-full animate-float opacity-80"></div>
+                        <div className="absolute left-8 top-2 w-8 h-8 bg-(--send-bubble-bg) rounded-full animate-float-delay opacity-90"></div>
+                        <div className="absolute right-8 top-8 w-5 h-5 bg-(--send-bubble-bg) rounded-full animate-float-delay-2"></div>
+                        <div className="absolute right-0 top-4 w-7 h-7 bg-(--send-bubble-bg) rounded-full animate-float-delay-3 opacity-70"></div>
+                        <div className="absolute left-10 bottom-0 w-4 h-4 bg-(--send-bubble-bg) rounded-full animate-float opacity-60" 
+                             style={{ animationDelay: '0.3s' }}></div>
+                        <div className="absolute right-10 bottom-2 w-5 h-5 bg-(--send-bubble-bg) rounded-full animate-float-delay-2 opacity-75"
+                             style={{ animationDelay: '0.7s' }}></div>
+                        
+                        {/* Glowing effect under the avatar */}
+                        <div className="absolute inset-7 rounded-full animate-pulse-glow"></div>
+                        
+                        {/* Avatar circle in middle with appear animation */}
+                        <div className="absolute inset-7 rounded-full bg-white flex items-center justify-center shadow-md animate-avatar-appear overflow-hidden">
+                            {conversationData?.friend?.avatar ? (
+                                <img 
+                                    src={conversationData.friend.avatar} 
+                                    alt={conversationData.friend.fullName}
+                                    className="w-full h-full object-cover rounded-full"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-gray-200 rounded-full"></div>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <h3 className="text-lg font-medium text-(--primary-text) mb-2 animate-pulse">
+                        {conversationData?.friend?.fullName || "Loading conversation..."}
+                    </h3>
+                    
+                    {/* Animated ellipsis */}
+                    <div className="flex space-x-2 mb-6">
+                        {[0, 1, 2].map((i) => (
+                            <div
+                                key={i}
+                                className="w-2 h-2 rounded-full bg-(--send-bubble-bg)"
+                                style={{ 
+                                    animation: `bounce 1.4s infinite ease-in-out both`,
+                                    animationDelay: `${i * 0.16}s`
+                                }}
+                            />
+                        ))}
+                    </div>
+                </div>
+                
+                {/* Add keyframes for the bounce animation */}
+                <style jsx global>{`
+                    @keyframes bounce {
+                        0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+                        40% { transform: scale(1); opacity: 1; }
+                    }
+                `}</style>
+            </section>
+        );
+    }
 
     if (!conversationData) {
         return (
@@ -225,7 +292,6 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
                     <button
                         onClick={() => {
                             setSelectedConversation(null);
-                            router.push('/talk');
                         }}
                         className="p-2 hover:bg-(--hover-bg) rounded-full transition-colors"
                     >
@@ -278,7 +344,6 @@ const ChatSection = ({ chatData, conversationData, currentUserId }) => {
                                 onClick={() => {
                                     setSelectedConversation(null);
                                     setShowMenu(false);
-                                    router.push('/talk');
                                 }}
                                 className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-(--hover-bg) text-(--primary-text)"
                             >

@@ -38,10 +38,16 @@ const Sidebar = () => {
     } = useSocketMessages(currentUserId);
 
     const handleConversationSelect = async (conversation) => {
-        setSelectedConversation(conversation);
-
+        // If already selected, do nothing
+        if (selectedConversation?.conversationId === conversation.conversationId) {
+            return;
+        }
+        
         try {
-            // Mark as read
+            // Always show loading even if we have cached messages
+            setMessages([]);
+            
+            // Mark as read if needed
             if (conversation.unreadCount > 0) {
                 markConversationRead(conversation.conversationId);
                 setUnreadMap(prev => ({
@@ -50,9 +56,11 @@ const Sidebar = () => {
                 }));
             }
 
-            router.push(`/talk/${conversation.conversationId}`);
+            // Update selected conversation state
+            setSelectedConversation(conversation);
+            
         } catch (error) {
-            console.error('Error loading messages:', error);
+            console.error('Error selecting conversation:', error);
         }
     };
 

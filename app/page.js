@@ -4,17 +4,18 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 export default async function Home() {
-  const user = await currentUser()
+  const user = await currentUser();
 
+  // Only redirect if user is definitely authenticated
   if (user) {
-    redirect('/talk')
+    redirect('/talk');
   }
 
   return (
     <>
+      {/* Wrap the entire content in SignedOut to prevent flash before redirect */}
       <SignedOut>
         <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-gradient-to-b from-(--bg) to-(--input-bg)">
-
           <div className="text-center space-y-6 max-w-2xl mx-auto">
 
             <div className="relative group cursor-pointer mb-8">
@@ -45,7 +46,6 @@ export default async function Home() {
               ))}
             </div>
 
-
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
               <SignUpButton mode="modal">
                 <button className="px-8 py-3 rounded-full bg-(--send-bubble-bg) text-white font-medium hover:opacity-90 transition-opacity">
@@ -61,6 +61,13 @@ export default async function Home() {
           </div>
         </main>
       </SignedOut>
+      
+      {/* Add this to handle authenticated users without redirecting */}
+      <SignedIn>
+        <div className="h-screen flex items-center justify-center">
+          <p className="text-lg">Redirecting to dashboard...</p>
+        </div>
+      </SignedIn>
     </>
   );
 }
