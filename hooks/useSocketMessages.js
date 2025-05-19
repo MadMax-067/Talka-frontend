@@ -121,21 +121,22 @@ export default function useSocketMessages(currentUserId) {
 
             // Update context messages
             // Update context messages with proper checking
-            setMessages(prev => {
-                // Skip if previous state is already correct (prevents unnecessary re-renders)
-                if (prev.length > 0 && prev[prev.length - 1]._id === message._id) {
-                    return prev;
-                }
+            if (isConversationOpen && isFromOther) {
+                setMessages(prev => {
+                    // Skip if previous state is already correct (prevents unnecessary re-renders)
+                    if (prev.length > 0 && prev[prev.length - 1]._id === message._id) {
+                        return prev;
+                    }
 
+                    // Check if current message exists to avoid duplicates
+                    const messageExists = prev.some(msg => msg._id === message._id);
+                    if (messageExists) {
+                        return prev;
+                    }
 
-                // Check if current message exists to avoid duplicates
-                const messageExists = prev.some(msg => msg._id === message._id);
-                if (messageExists) {
-                    return prev;
-                }
-
-                return [...prev, message];
-            });
+                    return [...prev, message];
+                });
+            }
             // setMessages(prev => {
             //     const filteredMessages = prev.filter(msg => !msg._id.startsWith('temp-'));
             //     return [...filteredMessages, message];
